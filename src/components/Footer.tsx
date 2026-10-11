@@ -97,7 +97,7 @@ export default function Footer({ settings }: { settings: Record<string, string> 
       <div className="border-t border-white/10 px-4 py-3 text-center text-[11px] text-cream/60">
         <p>© 2026 Shift Soul Creation</p>
         <p className="mt-0.5">
-          Created with{" "}
+          Created by{" "}
           <a
             href="https://beingadot.vercel.app"
             target="_blank"
