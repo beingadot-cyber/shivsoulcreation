@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 import crypto from "crypto";
 import { requireAdminApi } from "@/lib/auth";
 
@@ -44,14 +43,15 @@ export async function POST(req: Request) {
     }
 
     const ext = isImage ? IMAGE_TYPES[file.type] : VIDEO_TYPES[file.type];
-    const name = `up_${Date.now()}_${crypto.randomBytes(6).toString("hex")}${ext}`;
-    const dir = path.join(process.cwd(), "uploads");
-    await mkdir(dir, { recursive: true });
-    const buf = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(dir, name), buf);
+    const name = `uploads/up_${Date.now()}_${crypto.randomBytes(6).toString("hex")}${ext}`;
+    // Store in Vercel Blob (the server filesystem is read-only on Vercel)
+    const blob = await put(name, file, {
+      access: "public",
+      contentType: file.type,
+    });
     return NextResponse.json({
       ok: true,
-      url: `/media/${name}`,
+      url: blob.url,
       mediaType: isVideo ? "video" : "image",
     });
   } catch (e) {
