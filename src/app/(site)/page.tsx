@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Heart, Package, Sparkles, Star, Truck } from "lucide-react";
 import HeroCarousel from "@/components/HeroCarousel";
-import FirstVisitGate from "@/components/FirstVisitGate";
 import ProductCard from "@/components/ProductCard";
 import { getHomeData } from "@/lib/data";
 
@@ -10,7 +9,6 @@ export default async function Home() {
 
   return (
     <>
-      <FirstVisitGate />
 
       <HeroCarousel
         slides={home.hero.map((h) => ({
