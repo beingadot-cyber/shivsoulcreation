@@ -99,7 +99,7 @@ export default function Footer({ settings }: { settings: Record<string, string> 
         <p className="mt-0.5">
           Created by{" "}
           <a
-            href="https://beingadot.vercel.app"
+            href="https://www.instagram.com/shivsoulcreation/?hl=en"
             target="_blank"
             rel="noopener noreferrer"
             className="font-bold text-blush underline-offset-2 hover:underline"
