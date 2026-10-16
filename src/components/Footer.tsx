@@ -104,7 +104,7 @@ export default function Footer({ settings }: { settings: Record<string, string> 
             rel="noopener noreferrer"
             className="font-bold text-blush underline-offset-2 hover:underline"
           >
-            Being a Dot
+            Kanchan
           </a>
         </p>
       </div>
