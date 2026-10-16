@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-body: var(--font-quicksand), ui-sans-serif, system-ui, sans-serif;
+
+  --color-cream: #fdf8f3;
+  --color-blush: #f9e8ee;
+  --color-blushdeep: #f2d4e0;
+  --color-rose: #c4577e;
+  --color-rosedeep: #9e3b60;
+  --color-plum: #42262f;
+  --color-plumsoft: #7a5f69;
+  --color-gold: #b8862b;
+  --color-sage: #7d9279;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-cream font-body text-plum antialiased;
+    background-image:
+      radial-gradient(ellipse at top, rgb(184 134 43 / 0.13), transparent 60%),
+      radial-gradient(ellipse at bottom right, rgb(184 134 43 / 0.09), transparent 55%);
+    background-repeat: no-repeat;
+  }
+  ::selection {
+    background: var(--color-blushdeep);
+  }
+}
+
+@layer components {
+  .btn-rose {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-rose px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-rosedeep disabled:pointer-events-none disabled:opacity-50 min-h-11 whitespace-nowrap leading-none transition-transform active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold;
+  }
+  .btn-dark {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-plum px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-rosedeep disabled:pointer-events-none disabled:opacity-50 min-h-11 whitespace-nowrap leading-none transition-transform active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold;
+  }
+  .btn-outline {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-rose/40 bg-white px-5 py-2.5 text-sm font-bold text-rose transition-colors hover:border-rose hover:bg-blush disabled:pointer-events-none disabled:opacity-50 min-h-11 whitespace-nowrap leading-none transition-transform active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold;
+  }
+  .input {
+    @apply w-full rounded-xl border border-plum/15 bg-white px-4 py-2.5 text-sm text-plum outline-none transition placeholder:text-plumsoft/60 focus:border-rose focus:ring-2 focus:ring-rose/20;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-bold tracking-wider text-plumsoft uppercase;
+  }
+  .card {
+    @apply rounded-2xl border border-plum/10 bg-white shadow-sm;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full bg-blush px-3 py-1 text-xs font-bold text-rosedeep;
+  }
+  .section-title {
+    @apply font-display text-2xl font-semibold text-plum sm:text-3xl;
+  }
+  .admin-th {
+    @apply px-3 py-2.5 text-left text-xs font-bold tracking-wider text-plumsoft uppercase;
+  }
+  .admin-td {
+    @apply px-3 py-3 text-sm text-plum;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
