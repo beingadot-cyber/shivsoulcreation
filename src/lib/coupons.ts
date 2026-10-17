@@ -28,3 +28,22 @@ export function couponDiscount(code: string | null | undefined, subtotal: number
   if (!c || subtotal < c.minOrder) return 0;
   return Math.min(c.discount, subtotal);
 }
+
+/**
+ * Coupons ordered for the checkout dropdown: the ones this cart already
+ * qualifies for come first (biggest discount at the top), then the ones still
+ * locked (the nearest one to unlock first).
+ */
+export function sortedCoupons(subtotal: number): Coupon[] {
+  return [...COUPONS].sort((a, b) => {
+    const aOk = subtotal >= a.minOrder;
+    const bOk = subtotal >= b.minOrder;
+    if (aOk !== bOk) return aOk ? -1 : 1;
+    return aOk ? b.discount - a.discount : a.minOrder - b.minOrder;
+  });
+}
+
+/** The best coupon this cart qualifies for right now (biggest discount), if any. */
+export function bestCoupon(subtotal: number): Coupon | undefined {
+  return sortedCoupons(subtotal).find((c) => subtotal >= c.minOrder);
+}
