@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ShoppingBag, User, Menu, X } from "lucide-react";
+import { Search, ShoppingBag, User, Menu, X, Package } from "lucide-react";
 import AuthModal, { SESSION_EVENT } from "./AuthModal";
 import Logo from "./Logo";
 import { useCart, cartCount } from "@/store/cart";
@@ -71,6 +71,9 @@ export default function Header({ settings }: { settings: Record<string, string> 
           <nav className="ml-6 hidden items-center gap-6 text-sm font-bold text-plum md:flex">
             <Link href="/" className="transition hover:text-rose">Home</Link>
             <Link href="/products" className="transition hover:text-rose">Products</Link>
+            <Link href="/my-orders" className="inline-flex items-center gap-1.5 transition hover:text-rose">
+              <Package className="h-4 w-4" /> My Orders
+            </Link>
             <Link href="/support" className="transition hover:text-rose">Support</Link>
           </nav>
 
@@ -97,6 +100,15 @@ export default function Header({ settings }: { settings: Record<string, string> 
                 <User className="h-4 w-4" /> My Account
               </Link>
             )}
+
+            <Link
+              href="/my-orders"
+              aria-label="My Orders"
+              title="My Orders"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-blush text-rosedeep transition hover:bg-blushdeep md:hidden"
+            >
+              <Package className="h-5 w-5" strokeWidth={1.8} />
+            </Link>
 
             <Link
               href="/cart"
@@ -136,6 +148,9 @@ export default function Header({ settings }: { settings: Record<string, string> 
             <nav className="flex flex-col gap-1 text-sm font-bold text-plum">
               <Link href="/" onClick={() => setMenuOpen(false)} className="rounded-xl px-3 py-2.5 hover:bg-blush">Home</Link>
               <Link href="/products" onClick={() => setMenuOpen(false)} className="rounded-xl px-3 py-2.5 hover:bg-blush">Products</Link>
+              <Link href="/my-orders" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2.5 hover:bg-blush">
+                <Package className="h-4 w-4" /> My Orders
+              </Link>
               <Link href="/support" onClick={() => setMenuOpen(false)} className="rounded-xl px-3 py-2.5 hover:bg-blush">Support</Link>
               {me && (
                 <Link href="/account" onClick={() => setMenuOpen(false)} className="rounded-xl bg-blush px-3 py-2.5 text-rosedeep">

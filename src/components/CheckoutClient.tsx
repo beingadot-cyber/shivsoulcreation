@@ -9,10 +9,14 @@ import {
   ShoppingBag,
   CreditCard,
   Truck,
+  Tag,
+  X,
 } from "lucide-react";
 import { useCart } from "@/store/cart";
 import { formatINR } from "@/lib/format";
 import ProductImage from "@/components/ProductImage";
+import { COUPONS, couponDiscount } from "@/lib/coupons";
+import { shippingFor, FREE_DELIVERY_MIN } from "@/lib/shipping";
 
 type ProductInfo = {
   code: string;
@@ -42,6 +46,7 @@ export default function CheckoutClient() {
 
   const [form, setForm] = useState({ name: "", mobile: "", address: "", city: "", state: "", pin: "" });
   const [error, setError] = useState("");
+  const [couponCode, setCouponCode] = useState("");
   const [placing, setPlacing] = useState(false);
 
   const orderItems = useMemo(
@@ -85,8 +90,9 @@ export default function CheckoutClient() {
     .map((i) => ({ ...i, product: info.get(i.code) }))
     .filter((l) => l.product);
   const subtotal = lines.reduce((s, l) => s + l.product!.price * l.qty, 0);
-  const shipping = 0; // flat shipping charge removed
-  const total = subtotal + shipping;
+  const discount = couponDiscount(couponCode, subtotal);
+  const shipping = shippingFor(subtotal);
+  const total = subtotal - discount + shipping;
 
   async function placeOrder(e: React.FormEvent) {
     e.preventDefault();
@@ -99,6 +105,7 @@ export default function CheckoutClient() {
         body: JSON.stringify({
           items: lines.map((l) => ({ code: l.code, qty: l.qty })),
           customer: form,
+          couponCode: discount > 0 ? couponCode : "",
         }),
       });
       const data = await res.json();
@@ -110,7 +117,7 @@ export default function CheckoutClient() {
       }
       // Hand over to PhonePe's secure payment page. The cart is cleared only
       // after a successful payment (on the payment status page).
-      window.location.href = data.redirectUrl;
+      window.location.assign(data.redirectUrl);
     } catch {
       setError("Network error. Please try again.");
       setPlacing(false);
@@ -253,11 +260,66 @@ export default function CheckoutClient() {
                 <dt>Subtotal</dt>
                 <dd className="font-semibold">{formatINR(subtotal)}</dd>
               </div>
+              {discount > 0 && (
+                <div className="flex justify-between font-semibold text-sage">
+                  <dt>Coupon ({couponCode})</dt>
+                  <dd>− {formatINR(discount)}</dd>
+                </div>
+              )}
+              <div className="flex justify-between text-plumsoft">
+                <dt>Delivery</dt>
+                <dd className={`font-semibold ${shipping === 0 ? "text-sage" : ""}`}>
+                  {shipping === 0 ? "FREE" : formatINR(shipping)}
+                </dd>
+              </div>
+              {shipping > 0 && (
+                <div className="rounded-lg bg-blush px-3 py-2 text-[11px] font-semibold text-rosedeep">
+                  Add {formatINR(FREE_DELIVERY_MIN - subtotal)} more for FREE delivery
+                </div>
+              )}
               <div className="flex justify-between border-t border-plum/10 pt-2 text-base font-bold">
                 <dt>Total</dt>
                 <dd className="font-display text-rosedeep">{formatINR(total)}</dd>
               </div>
             </dl>
+          </div>
+
+          <div className="card p-5">
+            <h2 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-plum">
+              <Tag className="h-4 w-4 text-rose" /> Coupon Code
+            </h2>
+            <select
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
+              className="input"
+              aria-label="Select a coupon"
+            >
+              <option value="">Select a coupon</option>
+              {COUPONS.map((c) => {
+                const ok = subtotal >= c.minOrder;
+                return (
+                  <option key={c.code} value={c.code} disabled={!ok}>
+                    {c.code} — ₹{c.discount} OFF on ₹{c.minOrder}+
+                    {ok ? "" : ` (add ₹${c.minOrder - subtotal} more)`}
+                  </option>
+                );
+              })}
+            </select>
+            {couponCode && discount > 0 && (
+              <p className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-sage/15 px-3 py-2 text-xs font-bold text-sage">
+                <span>
+                  {couponCode} applied — you save {formatINR(discount)}!
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCouponCode("")}
+                  aria-label="Remove coupon"
+                  className="cursor-pointer rounded-full p-0.5 hover:bg-sage/20"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </p>
+            )}
           </div>
 
           <div className="card p-5">

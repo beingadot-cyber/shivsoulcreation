@@ -6,6 +6,8 @@ import { ensureDb } from "@/lib/db-setup";
 import { getSession, isValidMobile, rateLimit } from "@/lib/auth";
 import { createPayment, isPhonePeConfigured } from "@/lib/phonepe";
 import { applyPaymentState } from "@/lib/payments";
+import { couponDiscount, findCoupon } from "@/lib/coupons";
+import { shippingFor } from "@/lib/shipping";
 
 const NAME_RE = /^[a-zA-Z][a-zA-Z .'-]{1,59}$/;
 
@@ -85,8 +87,26 @@ export async function POST(req: Request) {
       });
     }
 
-    const shipping = 0; // flat shipping charge removed
-    const total = subtotal + shipping;
+    // Optional coupon — always re-validated here on the server.
+    let couponCode: string | null = null;
+    let discount = 0;
+    if (body.couponCode) {
+      const coupon = findCoupon(body.couponCode);
+      if (!coupon) {
+        return NextResponse.json({ error: "This coupon code is not valid." }, { status: 400 });
+      }
+      discount = couponDiscount(coupon.code, subtotal);
+      if (discount <= 0) {
+        return NextResponse.json(
+          { error: `${coupon.code} needs a minimum order of ₹${coupon.minOrder}.` },
+          { status: 400 }
+        );
+      }
+      couponCode = coupon.code;
+    }
+
+    const shipping = shippingFor(subtotal); // ₹49 below ₹399, free from ₹399
+    const total = subtotal - discount + shipping;
 
     const session = await getSession();
     const customerId = session?.userType === "customer" ? session.userId : null;
@@ -105,6 +125,8 @@ export async function POST(req: Request) {
           pincode: c.pin,
           subtotal,
           shippingCharge: shipping,
+          discount,
+          couponCode,
           orderTotal: total,
           paymentStatus: "pending",
           orderStatus: "pending",

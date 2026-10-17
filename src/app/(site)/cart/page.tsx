@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "@/store/cart";
 import { formatINR } from "@/lib/format";
+import { shippingFor, FREE_DELIVERY_MIN } from "@/lib/shipping";
 import ProductImage from "@/components/ProductImage";
 
 type ProductInfo = {
@@ -46,6 +47,7 @@ export default function CartPage() {
     .map((i) => ({ ...i, product: info.get(i.code) }))
     .filter((l) => l.product);
   const subtotal = lines.reduce((s, l) => s + l.product!.price * l.qty, 0);
+  const shipping = shippingFor(subtotal);
 
   if (!mounted || loading) {
     return (
@@ -146,9 +148,20 @@ export default function CartPage() {
               <dt className="text-plumsoft">Subtotal</dt>
               <dd className="font-bold">{formatINR(subtotal)}</dd>
             </div>
+            <div className="flex justify-between">
+              <dt className="text-plumsoft">Delivery</dt>
+              <dd className={`font-bold ${shipping === 0 ? "text-sage" : ""}`}>
+                {shipping === 0 ? "FREE" : formatINR(shipping)}
+              </dd>
+            </div>
+            {shipping > 0 && (
+              <div className="rounded-lg bg-blush px-3 py-2 text-[11px] font-semibold text-rosedeep">
+                Add {formatINR(FREE_DELIVERY_MIN - subtotal)} more for FREE delivery
+              </div>
+            )}
             <div className="flex justify-between border-t border-plum/10 pt-3 text-base">
               <dt className="font-bold">Total</dt>
-              <dd className="font-display font-semibold text-rosedeep">{formatINR(subtotal)}</dd>
+              <dd className="font-display font-semibold text-rosedeep">{formatINR(subtotal + shipping)}</dd>
             </div>
           </dl>
           <Link href="/checkout" className="btn-rose mt-5 w-full py-3 text-base">

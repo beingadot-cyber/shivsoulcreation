@@ -68,38 +68,32 @@ export default function ProductCard({ product }: { product: CardProduct }) {
             </span>
           )}
         </div>
-        <div className="mt-3 flex gap-2">
-          {/* Mobile: icon only. Desktop: icon + text. */}
-          <Link
-            href={href}
-            aria-label={`View ${product.name}`}
-            title="View Product"
-            className="btn-outline flex-1 px-2 py-2 text-xs"
-          >
-            <Eye className="h-4 w-4" />
-            <span className="hidden sm:inline">View Product</span>
-          </Link>
+        <div className="mt-3 flex flex-col gap-2">
           <button
             onClick={handleAdd}
             disabled={out}
             aria-label={added ? "Added to cart" : "Add to cart"}
-            title="Add to Cart"
-            className={`flex-1 cursor-pointer px-2 py-2 text-xs ${
+            className={`w-full min-w-0 cursor-pointer px-3 py-2 text-xs sm:text-sm ${
               added ? "btn-dark bg-sage" : "btn-rose"
             }`}
           >
             {added ? (
               <>
-                <Check className="h-4 w-4" />
-                <span className="hidden sm:inline">Added</span>
+                <Check className="h-4 w-4 shrink-0" /> Added
               </>
             ) : (
               <>
-                <ShoppingBag className="h-4 w-4" />
-                <span className="hidden sm:inline">Add to Cart</span>
+                <ShoppingBag className="h-4 w-4 shrink-0" /> Add to Cart
               </>
             )}
           </button>
+          <Link
+            href={href}
+            aria-label={`View ${product.name}`}
+            className="btn-outline w-full min-w-0 px-3 py-2 text-xs sm:text-sm"
+          >
+            <Eye className="h-4 w-4 shrink-0" /> View Product
+          </Link>
         </div>
       </div>
     </div>

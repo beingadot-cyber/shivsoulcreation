@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FloatingCart from "@/components/FloatingCart";
 import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,7 @@ export default async function SiteLayout({
       <Header settings={settings} />
       <main className="flex-1">{children}</main>
       <Footer settings={settings} />
+      <FloatingCart />
     </div>
   );
 }

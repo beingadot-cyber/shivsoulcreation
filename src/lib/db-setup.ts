@@ -56,6 +56,8 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_ref varchar(80);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount integer NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code varchar(30);
 CREATE INDEX IF NOT EXISTS orders_customer_idx ON orders (customer_id);
 CREATE TABLE IF NOT EXISTS order_items (
   id SERIAL PRIMARY KEY,

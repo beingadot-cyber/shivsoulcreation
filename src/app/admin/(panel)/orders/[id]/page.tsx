@@ -81,6 +81,12 @@ export default async function AdminOrderDetail({
               <dt>Subtotal</dt>
               <dd>{formatINR(order.subtotal)}</dd>
             </div>
+            {order.discount > 0 && (
+              <div className="flex justify-between font-semibold text-sage">
+                <dt>Coupon ({order.couponCode})</dt>
+                <dd>− {formatINR(order.discount)}</dd>
+              </div>
+            )}
             <div className="flex justify-between text-plumsoft">
               <dt>Shipping</dt>
               <dd>{formatINR(order.shippingCharge)}</dd>
