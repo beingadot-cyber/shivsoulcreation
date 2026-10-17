@@ -164,7 +164,10 @@ export default function CartPage() {
               <dd className="font-display font-semibold text-rosedeep">{formatINR(subtotal + shipping)}</dd>
             </div>
           </dl>
-          <Link href="/checkout" className="btn-rose mt-5 w-full py-3 text-base">
+          <div className="mt-5 rounded-xl bg-blush px-3 py-2.5 text-center text-xs font-bold text-rosedeep">
+  ✨ Coupon codes available at checkout — save up to ₹350
+</div>
+<Link href="/checkout" className="btn-rose mt-3 w-full py-3 text-base">
             Proceed to Checkout <ArrowRight className="h-4 w-4" />
           </Link>
           <p className="mt-3 text-center text-[11px] font-semibold text-plumsoft">
