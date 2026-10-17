@@ -15,7 +15,7 @@ import {
 import { useCart } from "@/store/cart";
 import { formatINR } from "@/lib/format";
 import ProductImage from "@/components/ProductImage";
-import { COUPONS, couponDiscount } from "@/lib/coupons";
+import { sortedCoupons, bestCoupon, couponDiscount } from "@/lib/coupons";
 import { shippingFor, FREE_DELIVERY_MIN } from "@/lib/shipping";
 
 type ProductInfo = {
@@ -91,6 +91,7 @@ export default function CheckoutClient() {
     .filter((l) => l.product);
   const subtotal = lines.reduce((s, l) => s + l.product!.price * l.qty, 0);
   const discount = couponDiscount(couponCode, subtotal);
+  const best = bestCoupon(subtotal);
   const shipping = shippingFor(subtotal);
   const total = subtotal - discount + shipping;
 
@@ -295,16 +296,36 @@ export default function CheckoutClient() {
               aria-label="Select a coupon"
             >
               <option value="">Select a coupon</option>
-              {COUPONS.map((c) => {
+              {sortedCoupons(subtotal).map((c) => {
                 const ok = subtotal >= c.minOrder;
+                const isBest = best?.code === c.code;
+                const label = `${isBest ? "✨ " : ""}${c.code} — ₹${c.discount} OFF on ₹${c.minOrder}+${
+                  isBest ? " (Best offer)" : ""
+                }${ok ? "" : ` (add ₹${c.minOrder - subtotal} more)`}`;
                 return (
-                  <option key={c.code} value={c.code} disabled={!ok}>
-                    {c.code} — ₹{c.discount} OFF on ₹{c.minOrder}+
-                    {ok ? "" : ` (add ₹${c.minOrder - subtotal} more)`}
+                  <option
+                    key={c.code}
+                    value={c.code}
+                    disabled={!ok}
+                    style={isBest ? { backgroundColor: "#f9e8ee", color: "#9e3b60", fontWeight: 700 } : undefined}
+                  >
+                    {label}
                   </option>
                 );
               })}
             </select>
+            {best && couponCode !== best.code && (
+              <button
+                type="button"
+                onClick={() => setCouponCode(best.code)}
+                className="mt-2 flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-rose/30 bg-blush px-3 py-2 text-left text-xs font-bold text-rosedeep transition hover:bg-blushdeep"
+              >
+                <span>
+                  ✨ Best offer for you: {best.code} — save {formatINR(best.discount)}
+                </span>
+                <span className="shrink-0 rounded-full bg-rose px-3 py-1 text-[11px] text-white">Apply</span>
+              </button>
+            )}
             {couponCode && discount > 0 && (
               <p className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-sage/15 px-3 py-2 text-xs font-bold text-sage">
                 <span>
