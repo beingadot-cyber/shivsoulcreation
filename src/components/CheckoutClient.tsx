@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -17,6 +17,7 @@ import { formatINR } from "@/lib/format";
 import ProductImage from "@/components/ProductImage";
 import { sortedCoupons, bestCoupon, couponDiscount } from "@/lib/coupons";
 import { shippingFor, FREE_DELIVERY_MIN } from "@/lib/shipping";
+import { pixelTrack } from "@/lib/pixel";
 
 type ProductInfo = {
   code: string;
@@ -94,6 +95,21 @@ export default function CheckoutClient() {
   const best = bestCoupon(subtotal);
   const shipping = shippingFor(subtotal);
   const total = subtotal - discount + shipping;
+
+  // Meta Pixel: checkout opened (once per visit to this page)
+  const checkoutTracked = useRef(false);
+  useEffect(() => {
+    if (checkoutTracked.current || loading || lines.length === 0) return;
+    checkoutTracked.current = true;
+    pixelTrack("InitiateCheckout", {
+      content_ids: lines.map((l) => l.code),
+      content_type: "product",
+      contents: lines.map((l) => ({ id: l.code, quantity: l.qty, item_price: l.product!.price })),
+      num_items: lines.reduce((n, l) => n + l.qty, 0),
+      value: subtotal,
+      currency: "INR",
+    });
+  }, [loading, lines, subtotal]);
 
   async function placeOrder(e: React.FormEvent) {
     e.preventDefault();

@@ -4,8 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Minus, Plus, ShoppingBag, Zap } from "lucide-react";
 import { useCart } from "@/store/cart";
+import { pixelTrack } from "@/lib/pixel";
 
-export default function BuyBox({ code, stock }: { code: string; stock: number }) {
+export default function BuyBox({
+  code,
+  stock,
+  name,
+  price,
+}: {
+  code: string;
+  stock: number;
+  name?: string;
+  price?: number;
+}) {
   const router = useRouter();
   const add = useCart((s) => s.add);
   const [qty, setQty] = useState(1);
@@ -15,6 +26,14 @@ export default function BuyBox({ code, stock }: { code: string; stock: number })
 
   function handleAdd() {
     add(code, qty);
+    pixelTrack("AddToCart", {
+      content_ids: [code],
+      content_name: name,
+      content_type: "product",
+      contents: [{ id: code, quantity: qty, item_price: price }],
+      value: (price || 0) * qty,
+      currency: "INR",
+    });
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   }

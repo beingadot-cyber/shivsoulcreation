@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Check, Eye, ShoppingBag } from "lucide-react";
 import { useCart } from "@/store/cart";
 import { formatINR } from "@/lib/format";
+import { pixelTrack } from "@/lib/pixel";
 import ProductImage from "./ProductImage";
 
 export type CardProduct = {
@@ -26,6 +27,14 @@ export default function ProductCard({ product }: { product: CardProduct }) {
 
   function handleAdd() {
     add(product.productCode, 1);
+    pixelTrack("AddToCart", {
+      content_ids: [product.productCode],
+      content_name: product.name,
+      content_type: "product",
+      contents: [{ id: product.productCode, quantity: 1, item_price: product.price }],
+      value: product.price,
+      currency: "INR",
+    });
     setAdded(true);
     setTimeout(() => setAdded(false), 1400);
   }

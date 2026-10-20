@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { BadgeCheck, Loader2, XCircle } from "lucide-react";
 import { useCart } from "@/store/cart";
 import { formatINR } from "@/lib/format";
+import { pixelTrack } from "@/lib/pixel";
 
 type Info = {
   orderNumber: string;
@@ -40,6 +41,20 @@ export default function PaymentStatusClient() {
         setInfo(d);
         if (d.paymentStatus === "paid" && !cleared.current) {
           cleared.current = true;
+          // Meta Pixel: fire Purchase only once per order, and only after PhonePe confirmed payment
+          try {
+            const key = `ssc-purchase-${d.orderNumber}`;
+            if (!localStorage.getItem(key)) {
+              localStorage.setItem(key, "1");
+              pixelTrack(
+                "Purchase",
+                { value: d.total, currency: "INR", content_type: "product", order_id: d.orderNumber },
+                d.orderNumber
+              );
+            }
+          } catch {
+            pixelTrack("Purchase", { value: d.total, currency: "INR" }, d.orderNumber);
+          }
           clear();
         }
         // Keep polling for up to ~2 minutes while the payment is still pending.

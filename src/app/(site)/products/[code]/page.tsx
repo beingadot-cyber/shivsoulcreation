@@ -8,6 +8,7 @@ import ProductImage from "@/components/ProductImage";
 import ProductCard from "@/components/ProductCard";
 import BuyBox from "@/components/BuyBox";
 import ProductReviews from "@/components/ProductReviews";
+import ViewContentTracker from "@/components/ViewContentTracker";
 
 export async function generateMetadata({
   params,
@@ -37,6 +38,7 @@ export default async function ProductPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6">
+      <ViewContentTracker code={product.productCode} name={product.name} price={product.price} />
       {/* Breadcrumb */}
       <nav className="mb-5 flex items-center gap-1 text-xs font-semibold text-plumsoft">
         <Link href="/" className="hover:text-rose">Home</Link>
@@ -98,7 +100,12 @@ export default async function ProductPage({
           )}
 
           <div className="mt-6 border-t border-plum/10 pt-6">
-            <BuyBox code={product.productCode} stock={product.stockQuantity} />
+            <BuyBox
+              code={product.productCode}
+              stock={product.stockQuantity}
+              name={product.name}
+              price={product.price}
+            />
           </div>
         </div>
       </div>
