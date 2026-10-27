@@ -245,7 +245,7 @@ export default function CheckoutClient({ whatsapp = "" }: { whatsapp?: string })
           {error}
         </div>
       )}
-      <form onSubmit={placeOrder} className="grid gap-6 lg:grid-cols-[1fr_360px]">
+      <form onSubmit={placeOrder} data-clarity-mask="True" className="grid gap-6 lg:grid-cols-[1fr_360px]">
         {/* Customer information */}
         <div className="card h-fit p-5 sm:p-6">
           <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-plum">

@@ -108,7 +108,7 @@ export default function MyOrdersClient() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pt-8 pb-16 sm:pt-12">
+    <div data-clarity-mask="True" className="mx-auto max-w-2xl px-4 pt-8 pb-16 sm:pt-12">
       <div className="mb-6 text-center">
         <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-blush text-rose">
           <Package className="h-7 w-7" />
