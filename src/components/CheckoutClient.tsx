@@ -11,13 +11,17 @@ import {
   Truck,
   Tag,
   X,
+  ShieldCheck,
+  MessageCircle,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useCart } from "@/store/cart";
 import { formatINR } from "@/lib/format";
 import ProductImage from "@/components/ProductImage";
 import { sortedCoupons, bestCoupon, couponDiscount } from "@/lib/coupons";
 import { shippingFor, FREE_DELIVERY_MIN } from "@/lib/shipping";
-import { pixelTrack } from "@/lib/pixel";
+import { waLink } from "@/lib/whatsapp";
 
 type ProductInfo = {
   code: string;
@@ -35,7 +39,29 @@ const IN_STATES = [
   "Puducherry","Chandigarh","Andaman & Nicobar","Dadra & Nagar Haveli and Daman & Diu","Lakshadweep",
 ];
 
-export default function CheckoutClient() {
+function normState(s: string) {
+  return s.toLowerCase().replace(/&/g, "and").replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
+}
+/** Maps the state name returned by the PIN lookup to one of our dropdown options. */
+function matchState(raw: string): string {
+  const n = normState(raw).replace("orissa", "odisha");
+  if (!n) return "";
+  const exact = IN_STATES.find((s) => normState(s) === n);
+  if (exact) return exact;
+  const loose = IN_STATES.find((s) => {
+    const m = normState(s);
+    return (
+      m.startsWith(n) ||
+      n.startsWith(m) ||
+      (n.includes("andaman") && m.includes("andaman")) ||
+      (n.includes("dadra") && m.includes("dadra")) ||
+      (n.includes("jammu") && m.includes("jammu"))
+    );
+  });
+  return loose || "";
+}
+
+export default function CheckoutClient({ whatsapp = "" }: { whatsapp?: string }) {
   const params = useSearchParams();
   const buyCode = params.get("buy")?.toUpperCase() || "";
   const buyQty = Math.max(1, Math.min(99, parseInt(params.get("qty") || "1", 10) || 1));
@@ -49,6 +75,10 @@ export default function CheckoutClient() {
   const [error, setError] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [placing, setPlacing] = useState(false);
+  const [pinState, setPinState] = useState<"idle" | "loading" | "ok">("idle");
+  const [inApp, setInApp] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const lastPin = useRef("");
 
   const orderItems = useMemo(
     () => (buyCode ? [{ code: buyCode, qty: buyQty }] : cartItems),
@@ -56,6 +86,11 @@ export default function CheckoutClient() {
   );
 
   useEffect(() => setMounted(true), []);
+
+  // Instagram / Facebook in-app browsers often can't open UPI apps.
+  useEffect(() => {
+    setInApp(/Instagram|FBAN|FBAV|FB_IAB|FBIOS/i.test(navigator.userAgent));
+  }, []);
 
   // Prefill mobile when logged in
   useEffect(() => {
@@ -96,20 +131,56 @@ export default function CheckoutClient() {
   const shipping = shippingFor(subtotal);
   const total = subtotal - discount + shipping;
 
-  // Meta Pixel: checkout opened (once per visit to this page)
-  const checkoutTracked = useRef(false);
+  // Fill city + state automatically from the PIN code.
   useEffect(() => {
-    if (checkoutTracked.current || loading || lines.length === 0) return;
-    checkoutTracked.current = true;
-    pixelTrack("InitiateCheckout", {
-      content_ids: lines.map((l) => l.code),
-      content_type: "product",
-      contents: lines.map((l) => ({ id: l.code, quantity: l.qty, item_price: l.product!.price })),
-      num_items: lines.reduce((n, l) => n + l.qty, 0),
-      value: subtotal,
-      currency: "INR",
-    });
-  }, [loading, lines, subtotal]);
+    if (form.pin.length !== 6 || form.pin === lastPin.current) return;
+    lastPin.current = form.pin;
+    let stop = false;
+    setPinState("loading");
+    fetch(`/api/pincode?pin=${form.pin}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (stop) return;
+        if (d.city || d.state) {
+          setForm((f) => ({ ...f, city: d.city || f.city, state: matchState(d.state || "") || f.state }));
+          setPinState("ok");
+        } else setPinState("idle");
+      })
+      .catch(() => !stop && setPinState("idle"));
+    return () => {
+      stop = true;
+    };
+  }, [form.pin]);
+
+  // Remember people who typed a mobile number, so the owner can follow up if they don't pay.
+  const linesKey = lines.map((l) => `${l.code}x${l.qty}`).join(",");
+  useEffect(() => {
+    if (!mounted || !linesKey || !/^[6-9]\d{9}$/.test(form.mobile)) return;
+    const t = setTimeout(() => {
+      fetch("/api/checkout/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mobile: form.mobile,
+          name: form.name,
+          items: linesKey.split(",").map((x) => {
+            const [code, qty] = x.split("x");
+            return { code, qty: Number(qty) };
+          }),
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [mounted, form.mobile, form.name, linesKey]);
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  }
 
   async function placeOrder(e: React.FormEvent) {
     e.preventDefault();
@@ -180,12 +251,12 @@ export default function CheckoutClient() {
           <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-plum">
             <Truck className="h-5 w-5 text-rose" /> Delivery Details
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+          <div className="grid gap-4 sm:grid-cols-6">
+            <div className="sm:col-span-3">
               <label className="label" htmlFor="co-name">Full Name *</label>
               <input id="co-name" className="input" required minLength={3} value={form.name} onChange={set("name")} placeholder="Your full name" autoComplete="name" />
             </div>
-            <div className="sm:col-span-2">
+            <div className="sm:col-span-3">
               <label className="label" htmlFor="co-mobile">Mobile Number *</label>
               <div className="relative">
                 <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-sm font-semibold text-plumsoft">+91</span>
@@ -204,32 +275,6 @@ export default function CheckoutClient() {
               </div>
             </div>
             <div className="sm:col-span-2">
-              <label className="label" htmlFor="co-address">Complete Delivery Address *</label>
-              <textarea
-                id="co-address"
-                className="input min-h-20 resize-y"
-                required
-                minLength={8}
-                value={form.address}
-                onChange={set("address")}
-                placeholder="House no., street, area, landmark"
-                autoComplete="street-address"
-              />
-            </div>
-            <div>
-              <label className="label" htmlFor="co-city">City *</label>
-              <input id="co-city" className="input" required value={form.city} onChange={set("city")} placeholder="City" autoComplete="address-level2" />
-            </div>
-            <div>
-              <label className="label" htmlFor="co-state">State *</label>
-              <select id="co-state" className="input cursor-pointer" required value={form.state} onChange={set("state")}>
-                <option value="">Select state</option>
-                {IN_STATES.map((st) => (
-                  <option key={st} value={st}>{st}</option>
-                ))}
-              </select>
-            </div>
-            <div>
               <label className="label" htmlFor="co-pin">PIN Code *</label>
               <input
                 id="co-pin"
@@ -244,9 +289,40 @@ export default function CheckoutClient() {
                 autoComplete="postal-code"
               />
             </div>
+            <div className="sm:col-span-2">
+              <label className="label" htmlFor="co-city">City *</label>
+              <input id="co-city" className="input" required value={form.city} onChange={set("city")} placeholder="City" autoComplete="address-level2" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="label" htmlFor="co-state">State *</label>
+              <select id="co-state" className="input cursor-pointer" required value={form.state} onChange={set("state")}>
+                <option value="">Select state</option>
+                {IN_STATES.map((st) => (
+                  <option key={st} value={st}>{st}</option>
+                ))}
+              </select>
+            </div>
+            {pinState !== "idle" && (
+              <p className="-mt-2 text-[11px] font-semibold text-plumsoft sm:col-span-6">
+                {pinState === "loading" ? "Finding your city…" : "✓ City & state filled from your PIN code — please check them."}
+              </p>
+            )}
+            <div className="sm:col-span-6">
+              <label className="label" htmlFor="co-address">Complete Delivery Address *</label>
+              <textarea
+                id="co-address"
+                className="input min-h-20 resize-y"
+                required
+                minLength={8}
+                value={form.address}
+                onChange={set("address")}
+                placeholder="House no., street, area, landmark"
+                autoComplete="street-address"
+              />
+            </div>
           </div>
           <p className="mt-4 flex items-center gap-1.5 text-[11px] font-semibold text-plumsoft">
-            <Lock className="h-3.5 w-3.5" /> Your details are used only to deliver this order.
+            <Lock className="h-3.5 w-3.5 shrink-0" /> Your details are used only to deliver this order and to contact you about it.
           </p>
         </div>
 
@@ -366,6 +442,20 @@ export default function CheckoutClient() {
               <span className="font-bold text-plum">{formatINR(total)}</span> using UPI,
               cards or net banking.
             </p>
+            {inApp && (
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] leading-relaxed font-semibold text-amber-800">
+                Paying from Instagram or Facebook? If your UPI app doesn&apos;t open, tap the ⋮ / ⋯ menu and choose{" "}
+                <b>Open in browser</b> — or copy this link and open it in Chrome.
+                <button
+                  type="button"
+                  onClick={copyLink}
+                  className="mt-2 flex cursor-pointer items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] font-bold text-amber-800 shadow-sm"
+                >
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? "Link copied" : "Copy link"}
+                </button>
+              </div>
+            )}
             <button type="submit" disabled={placing} className="btn-rose mt-4 w-full py-3 text-base">
               {placing ? (
                 <>
@@ -380,6 +470,27 @@ export default function CheckoutClient() {
             <p className="mt-2 text-center text-[11px] font-semibold text-plumsoft">
               Guest checkout — no account needed
             </p>
+            <ul className="mt-4 space-y-2 border-t border-plum/10 pt-4 text-[11px] font-semibold text-plumsoft">
+              <li className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 shrink-0 text-sage" /> Secure payment powered by PhonePe
+              </li>
+              <li className="flex items-center gap-2">
+                <Truck className="h-4 w-4 shrink-0 text-sage" /> Free delivery on orders above ₹{FREE_DELIVERY_MIN}
+              </li>
+              <li className="flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4 shrink-0 text-sage" /> Handcrafted with love, packed with care
+              </li>
+            </ul>
+            {waLink(whatsapp, "Hi! I need help with my order on Shiv Soul Creations.") && (
+              <a
+                href={waLink(whatsapp, "Hi! I need help with my order on Shiv Soul Creations.")!}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 flex items-center justify-center gap-2 rounded-full border border-sage/40 bg-sage/10 px-4 py-2.5 text-xs font-bold text-sage transition hover:bg-sage/20"
+              >
+                <MessageCircle className="h-4 w-4" /> Need help? Chat with us on WhatsApp
+              </a>
+            )}
           </div>
         </aside>
       </form>

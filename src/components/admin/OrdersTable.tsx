@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, Search } from "lucide-react";
+import { Eye, FileDown, Search } from "lucide-react";
 import { formatINR, formatDate, statusLabel } from "@/lib/format";
 import OrderStatusControls from "./OrderStatusControls";
 
@@ -128,13 +128,24 @@ export default function OrdersTable({
                   </td>
                   <td className="admin-td text-plumsoft whitespace-nowrap">{formatDate(o.createdAt)}</td>
                   <td className="admin-td text-right">
-                    <Link
-                      href={`/admin/orders/${o.id}`}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blush text-rosedeep transition hover:bg-blushdeep"
-                      aria-label={`View ${o.orderNumber}`}
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                    </Link>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <a
+                        href={`/api/admin/orders/${o.id}/pdf`}
+                        download={`${o.orderNumber}.pdf`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blush text-rosedeep transition hover:bg-blushdeep"
+                        aria-label={`Download PDF for ${o.orderNumber}`}
+                        title="Download PDF"
+                      >
+                        <FileDown className="h-3.5 w-3.5" />
+                      </a>
+                      <Link
+                        href={`/admin/orders/${o.id}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blush text-rosedeep transition hover:bg-blushdeep"
+                        aria-label={`View ${o.orderNumber}`}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}

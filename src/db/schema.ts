@@ -145,6 +145,19 @@ export const sessions = pgTable("sessions", {
     .defaultNow(),
 });
 
+export const abandonedCheckouts = pgTable("abandoned_checkouts", {
+  id: serial("id").primaryKey(),
+  mobile: varchar("mobile", { length: 10 }).notNull().unique(),
+  name: varchar("name", { length: 120 }).notNull().default(""),
+  itemsText: text("items_text").notNull().default(""),
+  cartTotal: integer("cart_total").notNull().default(0),
+  status: varchar("status", { length: 20 }).notNull().default("open"),
+  contacted: boolean("contacted").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type AbandonedCheckout = typeof abandonedCheckouts.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Customer = typeof customers.$inferSelect;
 export type Order = typeof orders.$inferSelect;

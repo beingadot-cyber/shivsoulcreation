@@ -8,7 +8,9 @@ import ProductImage from "@/components/ProductImage";
 import ProductCard from "@/components/ProductCard";
 import BuyBox from "@/components/BuyBox";
 import ProductReviews from "@/components/ProductReviews";
-import ViewContentTracker from "@/components/ViewContentTracker";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
+import { getSettings } from "@/lib/settings";
+import { waLink } from "@/lib/whatsapp";
 
 export async function generateMetadata({
   params,
@@ -18,7 +20,34 @@ export async function generateMetadata({
   const { code } = await params;
   const product = await getProductByCode(code);
   if (!product) return { title: "Product not found" };
-  return { title: product.name };
+  const desc = (
+    product.description ||
+    `${product.name} — handcrafted festive décor by ${SITE_NAME}. Secure payment, delivered across India.`
+  )
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 155);
+  const path = `/products/${product.productCode.toLowerCase()}`;
+  return {
+    title: product.name,
+    description: desc,
+    alternates: { canonical: path },
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      locale: "en_IN",
+      url: path,
+      title: product.name,
+      description: desc,
+      ...(product.imageUrl ? { images: [{ url: product.imageUrl, alt: product.name }] } : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description: desc,
+      ...(product.imageUrl ? { images: [product.imageUrl] } : {}),
+    },
+  };
 }
 
 export default async function ProductPage({
@@ -35,10 +64,32 @@ export default async function ProductPage({
     .filter((p) => p.id !== product.id && p.category === product.category)
     .slice(0, 4);
   const out = product.stockQuantity <= 0;
+  const settingsMap = await getSettings();
+  const waHelp = waLink(settingsMap.whatsapp_number, `Hi! I have a question about ${product.name} (${product.productCode}).`);
+  const productLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    sku: product.productCode,
+    ...(product.description ? { description: product.description } : {}),
+    ...(product.imageUrl ? { image: [product.imageUrl] } : {}),
+    brand: { "@type": "Brand", name: SITE_NAME },
+    offers: {
+      "@type": "Offer",
+      url: `${SITE_URL}/products/${product.productCode.toLowerCase()}`,
+      priceCurrency: "INR",
+      price: product.price,
+      itemCondition: "https://schema.org/NewCondition",
+      availability: out ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+    },
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6">
-      <ViewContentTracker code={product.productCode} name={product.name} price={product.price} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd).replace(/</g, "\\u003c") }}
+      />
       {/* Breadcrumb */}
       <nav className="mb-5 flex items-center gap-1 text-xs font-semibold text-plumsoft">
         <Link href="/" className="hover:text-rose">Home</Link>
@@ -100,12 +151,17 @@ export default async function ProductPage({
           )}
 
           <div className="mt-6 border-t border-plum/10 pt-6">
-            <BuyBox
-              code={product.productCode}
-              stock={product.stockQuantity}
-              name={product.name}
-              price={product.price}
-            />
+            <BuyBox code={product.productCode} stock={product.stockQuantity} />
+            {waHelp && (
+              <a
+                href={waHelp}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-sage hover:underline"
+              >
+                Questions about this product? Chat with us on WhatsApp
+              </a>
+            )}
           </div>
         </div>
       </div>

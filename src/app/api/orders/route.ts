@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { products, orders, orderItems } from "@/db/schema";
+import { products, orders, orderItems, abandonedCheckouts } from "@/db/schema";
 import { ensureDb } from "@/lib/db-setup";
 import { getSession, isValidMobile, rateLimit } from "@/lib/auth";
 import { createPayment, isPhonePeConfigured } from "@/lib/phonepe";
@@ -152,6 +152,16 @@ export async function POST(req: Request) {
       }
       return { id: created.id, orderNumber };
     });
+
+    // This person went on to place an order — take them off the abandoned list.
+    try {
+      await db
+        .update(abandonedCheckouts)
+        .set({ status: "ordered", updatedAt: new Date() })
+        .where(eq(abandonedCheckouts.mobile, c.mobile));
+    } catch (e) {
+      console.error("abandoned-mark-ordered", e);
+    }
 
     // Start the PhonePe payment for this order.
     const h = req.headers;

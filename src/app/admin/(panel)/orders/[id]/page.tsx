@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MapPin, Phone, User } from "lucide-react";
+import { ArrowLeft, FileDown, MapPin, Phone, User } from "lucide-react";
 import { getOrderWithItems, ORDER_STATUSES, PAYMENT_STATUSES } from "@/lib/data";
 import { formatINR, formatDateTime } from "@/lib/format";
 import OrderStatusControls from "@/components/admin/OrderStatusControls";
@@ -40,13 +40,22 @@ export default async function AdminOrderDetail({
         <h1 className="font-display text-2xl font-semibold text-plum">
           Order <span className="font-mono text-rosedeep">{order.orderNumber}</span>
         </h1>
-        <OrderStatusControls
-          orderId={order.id}
-          orderStatus={order.orderStatus}
-          paymentStatus={order.paymentStatus}
-          orderStatuses={[...ORDER_STATUSES]}
-          paymentStatuses={[...PAYMENT_STATUSES]}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href={`/api/admin/orders/${order.id}/pdf`}
+            download={`${order.orderNumber}.pdf`}
+            className="inline-flex items-center gap-1.5 rounded-full bg-blush px-4 py-2 text-xs font-bold text-rosedeep transition hover:bg-blushdeep"
+          >
+            <FileDown className="h-4 w-4" /> Download PDF
+          </a>
+          <OrderStatusControls
+            orderId={order.id}
+            orderStatus={order.orderStatus}
+            paymentStatus={order.paymentStatus}
+            orderStatuses={[...ORDER_STATUSES]}
+            paymentStatuses={[...PAYMENT_STATUSES]}
+          />
+        </div>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_340px]">

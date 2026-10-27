@@ -1,10 +1,12 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import CheckoutClient from "@/components/CheckoutClient";
+import { getSettings } from "@/lib/settings";
 
-export const metadata: Metadata = { title: "Checkout" };
+export const metadata: Metadata = { robots: { index: false, follow: false }, title: "Checkout" };
 
-export default function CheckoutPage() {
+export default async function CheckoutPage() {
+  const s = await getSettings();
   return (
     <Suspense
       fallback={
@@ -13,7 +15,7 @@ export default function CheckoutPage() {
         </div>
       }
     >
-      <CheckoutClient />
+      <CheckoutClient whatsapp={s.whatsapp_number || ""} />
     </Suspense>
   );
 }

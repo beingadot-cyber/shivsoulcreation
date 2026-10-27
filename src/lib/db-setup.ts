@@ -106,6 +106,17 @@ CREATE TABLE IF NOT EXISTS sessions (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS sessions_token_idx ON sessions (token_hash);
+CREATE TABLE IF NOT EXISTS abandoned_checkouts (
+  id SERIAL PRIMARY KEY,
+  mobile varchar(10) NOT NULL UNIQUE,
+  name varchar(120) NOT NULL DEFAULT '',
+  items_text text NOT NULL DEFAULT '',
+  cart_total integer NOT NULL DEFAULT 0,
+  status varchar(20) NOT NULL DEFAULT 'open',
+  contacted boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 `;
 
 const SEED_PRODUCTS: {

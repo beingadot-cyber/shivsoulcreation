@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { BadgeCheck, Loader2, XCircle } from "lucide-react";
 import { useCart } from "@/store/cart";
 import { formatINR } from "@/lib/format";
-import { pixelTrack } from "@/lib/pixel";
+import { waLink } from "@/lib/whatsapp";
 
 type Info = {
   orderNumber: string;
@@ -15,7 +15,7 @@ type Info = {
   customerMobile: string;
 };
 
-export default function PaymentStatusClient() {
+export default function PaymentStatusClient({ whatsapp = "" }: { whatsapp?: string }) {
   const order = useSearchParams().get("order") || "";
   const { clear } = useCart();
   const [info, setInfo] = useState<Info | null>(null);
@@ -41,20 +41,6 @@ export default function PaymentStatusClient() {
         setInfo(d);
         if (d.paymentStatus === "paid" && !cleared.current) {
           cleared.current = true;
-          // Meta Pixel: fire Purchase only once per order, and only after PhonePe confirmed payment
-          try {
-            const key = `ssc-purchase-${d.orderNumber}`;
-            if (!localStorage.getItem(key)) {
-              localStorage.setItem(key, "1");
-              pixelTrack(
-                "Purchase",
-                { value: d.total, currency: "INR", content_type: "product", order_id: d.orderNumber },
-                d.orderNumber
-              );
-            }
-          } catch {
-            pixelTrack("Purchase", { value: d.total, currency: "INR" }, d.orderNumber);
-          }
           clear();
         }
         // Keep polling for up to ~2 minutes while the payment is still pending.
@@ -118,10 +104,28 @@ export default function PaymentStatusClient() {
             <h1 className="font-display text-xl font-semibold text-plum">Payment not completed</h1>
             <p className="mt-2 text-sm text-plumsoft">
               Your payment for order <span className="font-mono">{info.orderNumber}</span> did not go through,
-              so the order was cancelled. If money was deducted, it will be refunded automatically by your bank.
+              so the order was cancelled. If money was deducted, your bank will refund it automatically.
               Your cart is still saved.
             </p>
+            <div className="mx-auto mt-4 max-w-sm rounded-xl bg-blush p-4 text-left text-xs leading-relaxed font-semibold text-rosedeep">
+              <p className="mb-1 font-bold">Tips for a smooth payment:</p>
+              <ul className="list-disc space-y-1 pl-4">
+                <li>If your UPI app didn&apos;t open, open this site in Chrome or Safari and try again (the Instagram / Facebook browser can block UPI apps).</li>
+                <li>Make sure your UPI app is updated and your bank account is linked.</li>
+                <li>You can also pay with a card or net banking on the PhonePe page.</li>
+              </ul>
+            </div>
             <Link href="/checkout" className="btn-rose mt-4 px-7 py-3">Try Again</Link>
+            {waLink(whatsapp, `Hi! My payment for order ${info.orderNumber} did not go through. Can you help?`) && (
+              <a
+                href={waLink(whatsapp, `Hi! My payment for order ${info.orderNumber} did not go through. Can you help?`)!}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex items-center justify-center rounded-full border border-sage/40 bg-sage/10 px-5 py-2.5 text-xs font-bold text-sage transition hover:bg-sage/20"
+              >
+                Chat with us on WhatsApp
+              </a>
+            )}
           </div>
         )}
       </div>

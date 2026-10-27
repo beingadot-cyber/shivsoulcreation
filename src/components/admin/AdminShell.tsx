@@ -12,6 +12,7 @@ import {
   Settings,
   Users,
   ExternalLink,
+  ShoppingCart,
 } from "lucide-react";
 
 const LINKS = [
@@ -19,6 +20,7 @@ const LINKS = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/orders", label: "Orders", icon: ClipboardList },
+  { href: "/admin/abandoned", label: "Abandoned", icon: ShoppingCart },
   { href: "/admin/homepage", label: "Homepage", icon: Home },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

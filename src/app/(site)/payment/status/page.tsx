@@ -1,10 +1,12 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import PaymentStatusClient from "@/components/PaymentStatusClient";
+import { getSettings } from "@/lib/settings";
 
-export const metadata: Metadata = { title: "Payment Status" };
+export const metadata: Metadata = { robots: { index: false, follow: false }, title: "Payment Status" };
 
-export default function PaymentStatusPage() {
+export default async function PaymentStatusPage() {
+  const s = await getSettings();
   return (
     <Suspense
       fallback={
@@ -13,7 +15,7 @@ export default function PaymentStatusPage() {
         </div>
       }
     >
-      <PaymentStatusClient />
+      <PaymentStatusClient whatsapp={s.whatsapp_number || ""} />
     </Suspense>
   );
 }

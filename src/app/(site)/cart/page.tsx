@@ -171,7 +171,7 @@ export default function CartPage() {
             Proceed to Checkout <ArrowRight className="h-4 w-4" />
           </Link>
           <p className="mt-3 text-center text-[11px] font-semibold text-plumsoft">
-            Delivery between 7 - 10 days ✈️
+            Guest checkout available — no account needed
           </p>
         </aside>
       </div>
