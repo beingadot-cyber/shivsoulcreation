@@ -174,6 +174,7 @@ export async function getCustomerStats() {
       mobileNumber: customers.mobileNumber,
       countryCode: customers.countryCode,
       mobileVerified: customers.mobileVerified,
+      hasPassword: sql<boolean>`${customers.passwordHash} <> ''`,
       accountStatus: customers.accountStatus,
       createdAt: customers.createdAt,
       lastLogin: customers.lastLogin,
