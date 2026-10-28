@@ -27,10 +27,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
     }
     const existing = await db
-      .select({ id: customers.id })
+      .select({ id: customers.id, passwordHash: customers.passwordHash, accountStatus: customers.accountStatus })
       .from(customers)
       .where(eq(customers.mobileNumber, mobile))
       .limit(1);
+    if (existing[0] && !existing[0].passwordHash) {
+      // Number was saved earlier by the site popup (no password yet) — let them set one now.
+      if (existing[0].accountStatus !== "active") {
+        return NextResponse.json({ error: "Your account has been disabled. Please contact support." }, { status: 403 });
+      }
+      await db
+        .update(customers)
+        .set({ passwordHash: hashPassword(password), lastLogin: new Date() })
+        .where(eq(customers.id, existing[0].id));
+      await createSession("customer", existing[0].id);
+      return NextResponse.json({ ok: true });
+    }
     if (existing[0]) {
       return NextResponse.json(
         { error: "This mobile number is already registered. Please log in.", code: "exists" },

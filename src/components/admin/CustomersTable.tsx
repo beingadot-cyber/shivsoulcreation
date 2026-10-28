@@ -10,6 +10,7 @@ type Row = {
   id: number;
   mobileNumber: string;
   mobileVerified: boolean;
+  hasPassword: boolean;
   accountStatus: string;
   createdAt: string;
   lastLogin: string | null;
@@ -101,7 +102,10 @@ export default function CustomersTable({ customers: initial }: { customers: Row[
               {filtered.map((c) => (
                 <tr key={c.id} className="transition hover:bg-blush/20">
                   <td className="admin-td font-mono font-bold">#{c.id}</td>
-                  <td className="admin-td font-mono font-bold">+91 {c.mobileNumber}</td>
+                  <td className="admin-td font-mono font-bold">
+                    +91 {c.mobileNumber}
+                    {!c.hasPassword && <span className="chip ml-2 bg-blush font-sans text-rosedeep">Visitor</span>}
+                  </td>
                   <td className="admin-td">
                     {c.mobileVerified ? (
                       <span className="chip bg-sage/15 text-sage">

@@ -40,6 +40,12 @@ export async function POST(req: Request) {
           { status: 403 }
         );
       }
+      if (!customer.passwordHash) {
+        return NextResponse.json(
+          { error: "No password is set for this number yet. Please sign up to create one.", code: "no-password" },
+          { status: 400 }
+        );
+      }
       if (!verifyPassword(password, customer.passwordHash)) {
         return NextResponse.json(
           { error: "Incorrect password. Please try again." },

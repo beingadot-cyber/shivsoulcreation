@@ -97,8 +97,14 @@ export default function CheckoutClient({ whatsapp = "" }: { whatsapp?: string })
     fetch("/api/auth/me", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
-        if (d.customer?.mobileNumber)
+        if (d.customer?.mobileNumber) {
           setForm((f) => ({ ...f, mobile: d.customer.mobileNumber }));
+        } else {
+          try {
+            const saved = localStorage.getItem("ssc_mobile") || "";
+            if (/^[6-9]\d{9}$/.test(saved)) setForm((f) => (f.mobile ? f : { ...f, mobile: saved }));
+          } catch {}
+        }
       })
       .catch(() => {});
   }, []);

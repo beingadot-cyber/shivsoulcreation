@@ -12,6 +12,7 @@ export default async function AdminCustomersPage() {
         id: c.id,
         mobileNumber: c.mobileNumber,
         mobileVerified: c.mobileVerified,
+        hasPassword: c.hasPassword,
         accountStatus: c.accountStatus,
         createdAt: c.createdAt.toISOString(),
         lastLogin: c.lastLogin ? c.lastLogin.toISOString() : null,
